@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Blinkfire Brand Spotter{% endblock %}
+{% block admin_content %}
+    <h3>Brand Spotter</h3>
+    <p>Input a brand picture url and a picture url with a possible match</p>
+    <form name="input" action="/spotter/visual" method="post">
+        Select a detection type:
+        <select name="spot_type" id="spot_type">
+            <option value="flann" {% if spot_type == 'flann' or not spot_type %}selected{% endif %}>FLANN</option>
+            <option value="cascade" {% if spot_type == 'cascade' %}selected{% endif %}>Cascade</option>
+        </select>
+        <div class="flann" {% if spot_type == 'cascade' %}style="display:none"{% endif %}>
+            Brand logo url:
+            {% if template_url %}
+                <strong>{{ template_url }}</strong><br/>
+                <img src="{{ template_url }}" width="300px" />
+                <p>
+                    SIFT settings: {{ sift_settings }} <br/>
+                    SURF settings: {{ surf_settings }}
+                </p>
+            {% else %}
+                <input type="text" name="template_url" value="{{ template_url }}"> <br/>
+                SIFT settings: <input type="text" name="sift" value="(0, 4, 0.03, 12, 1.8)"/> <br/>
+                SURF settings: <input type="text" name="surf" value="(400, 3, 4, True)"/>
+            {% endif %}
+        </div>
+        <div class="cascade" style="display:{% if spot_type == 'cascade' %}block{% else %}none{% endif %}">
+            Scale factor <input type="text" name="scale" value="{{ scale_factor|default('1.1') }}"> <br/>
+            Min neighbours <input type="text" name="min_neighbors" value="{{ min_neighbors|default('5') }}"> <br/>
+            Color:
+            <select name="color_scheme" id="color_scheme">
+                <option value="rgb" {% if color_scheme == 'rgb' %}selected{% endif %}>RGB</option>
+                <option value="grayscale" {% if color_scheme == 'grayscale' %}selected{% endif %}>grayscale</option>
+            </select>
+        </div>
+        <hr/>
+        Picture url:
+        {% if image_url %}
+            <strong>{{ image_url }}</strong><br />
+            <img src="{{ image_url }}"  width="300px"/><br/>
+        {% else %}
+            <input type="text" name="image_url" value="{{ image_url }}">
+        {% endif %}
+        <br/>
+        {% if spot_type %}
+            {% if not coordinates and not spots|length %}
+                <p>I could not find any match in the picture</p>
+            {% else %}
+                <h2>I found a match!</h2>
+                {% if spot_type == 'cascade' and spots|length%}
+                    <table class="table-condensed table-bordered table-striped" style="float:left">
+                        <thead>
+                            <tr>
+                                <th>brand id</th>
+                                <th>coordinates</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    {% for spot in spots %}
+                            <tr class="brand-{{ spot.brand_id }}">
+                                <td>{{ spot.brand_id }}</td>
+                                <td>{{ spot.coordinates }}</td>
+                            </tr>
+                    {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+                <div id="canvas-wrapper">
+                    <span id="after-canvas"></span>
+                </div>
+            {% endif %}
+            <br/>
+            <a href="/spotter/visual">Try again</a>
+        {% else %}
+            <input type="submit" value="Spot">
+        {% endif %}
+    </form>
+{% endblock %}
+
+{% block extra_javascript %}
+<script type="text/javascript">
+// doc.ready
+$(function() {
+    $('#spot_type').change(function(){
+        if (this.value == 'flann') {
+            $('.flann').show();
+            $('.cascade').hide();
+        } else {
+            $('.flann').hide();
+            $('.cascade').show();
+        }
+    });
+});
+
+function stringToColor(s, invert) {
+    var hex_color  = parseInt(parseInt(s, 36).toExponential().slice(2, -5), 10) & 0xFFFFFF;
+    if (typeof invert != 'undefined') {
+        hex_color = hex_color ^ 0xFFFFFF;
+    }
+    var color = (hex_color).toString(16);
+    while (color.length < 6) { color = "0" + color}
+    return "#" + color;
+}
+
+{% if spot_type == 'flann' and coordinates %}
+            var img = new Image();
+            img.onload = function(){
+                // create canvas element
+                canvas = document.createElement('canvas');
+                canvas.setAttribute('width', img.width);
+                canvas.setAttribute('height', img.height);
+                document.getElementById("canvas-wrapper").insertBefore(canvas, document.getElementById("after-canvas"));
+
+                var ctx = canvas.getContext("2d");
+                ctx.drawImage(img,0,0);
+                ctx.beginPath();
+                ctx.moveTo({{ coordinates.0.0 }}, {{ coordinates.0.1 }});
+                ctx.lineTo({{ coordinates.1.0 }}, {{ coordinates.1.1 }});
+                ctx.lineTo({{ coordinates.2.0 }}, {{ coordinates.2.1 }});
+                ctx.lineTo({{ coordinates.3.0 }}, {{ coordinates.3.1 }});
+                ctx.lineTo({{ coordinates.0.0 }}, {{ coordinates.0.1 }});
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = '#00FF00';
+                ctx.stroke();
+            };
+            img.src = '{{ image_url }}';
+
+{% endif %}
+{% if spot_type == 'cascade' and spots|length %}
+            var img = new Image();
+            img.onload = function(){
+                // create canvas element
+                canvas = document.createElement('canvas');
+                canvas.setAttribute('width', img.width);
+                canvas.setAttribute('height', img.height);
+                document.getElementById("canvas-wrapper").insertBefore(canvas, document.getElementById("after-canvas"));
+
+                var ctx = canvas.getContext("2d");
+                ctx.drawImage(img,0,0);
+            {% for spot in spots %}
+                ctx.beginPath();
+                ctx.moveTo({{ spot.coordinates.x1 }}, {{ spot.coordinates.y1 }});
+                ctx.lineTo({{ spot.coordinates.x2 }}, {{ spot.coordinates.y2 }});
+                ctx.lineTo({{ spot.coordinates.x3 }}, {{ spot.coordinates.y3 }});
+                ctx.lineTo({{ spot.coordinates.x4 }}, {{ spot.coordinates.y4 }});
+                ctx.lineTo({{ spot.coordinates.x1 }}, {{ spot.coordinates.y1 }});
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = stringToColor('{{ spot.brand_id }}');
+                ctx.stroke();
+
+                $('.brand-{{ spot.brand_id }} td').css('background-color', stringToColor('{{ spot.brand_id }}'));
+                $('.brand-{{ spot.brand_id }} td').css('color', stringToColor('{{ spot.brand_id }}', true));
+            {% endfor %}
+            };
+            img.src = '{{ image_url }}';
+
+
+{% endif %}
+</script>
+{% endblock %}
