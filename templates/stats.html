@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Blinkfire Brand Spotter{% endblock %}
+{% block admin_content %}
+    <h3>Brand Stats for {{ server }}</h3>
+    <div>
+        Classifier progress:
+        <div id="progress">
+            <span id="percent"> {{ cascade_progress }}% &nbsp;&nbsp;&nbsp;({{ n_cascades }}/{{ brands|length }})</span>
+            <div id="bar"></div>
+        </div>
+        <p>{{ n_cascades }} out of {{ brands|length }} brands use cascade classifier.</p>
+    </div>
+    <h2>Brands</h2>
+    <table class="table table-condensed table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>brand id</th>
+            <th>active</th>
+            <th>logos</th>
+            <th>samples</th>
+            <th>positive samples</th>
+            <th>negative samples</th>
+            <th>has classifier</th>
+            <th>last updated</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for brand in brands %}
+        <tr {% if not brand.has_classifier %}class="error"{% endif %} >
+            <td>{{ brand.key.id }}</td>
+            <td>{{ brand.active }}</td>
+            <td>{{ brand.n_logos }}</td>
+            <td>{{ brand.n_samples }}</td>
+            <td>{{ brand.pos_samples_percent }}%</td>
+            <td>{{ brand.neg_samples_percent }}%</td>
+            <td>{{ brand.has_classifier }}</td>
+            <td>{{ brand.last_update }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+     <style>
+        #progress {
+         width: 300px;
+         border: 1px solid black;
+         position: relative;
+         padding: 3px;
+        }
+
+        #percent {
+         position: absolute;
+         left: 40%;
+         color: #1A0A44;
+         font-weight: bold;
+        }
+
+        #bar {
+         height: 20px;
+         background-color: #7c87be;
+         width: {{ cascade_progress }}%;
+        }
+     </style>
+{% endblock %}
+
+{% block extra_javascript %}
+
+{% endblock %}

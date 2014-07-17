@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Blinkfire Brand Spotter - logos{% endblock %}
+{% block admin_content %}
+    <h3>Logos in database</h3>
+    {% if logos|length %}
+        <p>
+            Modifly ONLY if you know what you are doing. Check
+            <a href="http://docs.opencv.org/modules/nonfree/doc/feature_detection.html" target="_blank">SIFT and SURF parameters</a>
+            first.
+        </p>
+
+        <p>displaying <strong>{{ logos|length }}</strong> logos</p>
+        <table class="table table-condensed table-bordered table-striped">
+        <thead>
+            <tr>
+                <td>ID & Pic</td>
+                <td>brand</td>
+                <td>SIFT settings<br/>(valid Python tuple)</td>
+                <td>SURF settings<br/>(valid Python tuple)</td>
+                <td>last update</td>
+                <td>server</td>
+            </tr>
+        </thead>
+        <tbody>
+        {% for logo in logos %}
+            <tr>
+                <td>
+                    <a href="{{ logo.url }}">
+                        <img src="{{ logo.url }}" alt="" onerror="this.style.display='none'" width="40"  />
+                        {{ logo.id }}
+                    </a>
+                </td>
+
+                <td>{{ logo.brand_id }}</td>
+                <td>
+                    <form method="POST">
+                        <input type="hidden" name="logo" value="{{ logo.id }}"/>
+                        <input type="text" name="sift" value="{{ logo.sift_settings }}"/>
+                        <input type="submit" value="Update"/>
+                    </form>
+                </td>
+                <td>
+                    <form method="POST">
+                        <input type="hidden" name="logo" value="{{ logo.id }}"/>
+                        <input type="text" name="surf" value="{{ logo.surf_settings }}"/>
+                        <input type="submit" value="Update"/>
+                    </form>
+                </td>
+                <td>{{ logo.last_update }}</td>
+                <td>{{ logo.server }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+    {% else %}
+        <p>No logos found.</p>
+    {% endif %}
+{% endblock %}

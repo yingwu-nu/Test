@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Blinkfire Brand Spotter{% endblock %}
+{% block admin_content %}
+    <h3>Testing remote API from blinkfire-stats</h3>
+
+        <p>I fetched the following items remotely:</p>
+        {% for item in items %}
+            <p>{{ item.description }} </p> <br/>
+        {% endfor %}
+
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>{% block title %}{% endblock %}</title>
+    <link href="//stats.blinkfire.com/publisher/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    {% block extra_headers %}{% endblock %}
+</head>
+
+<body>
+    {% block admin_title %}
+    <div class="header">
+    </div>
+    {% endblock %}
+    <div class="admin-content">
+        {% block admin_content %}{% endblock %}
+    </div>
+
+    <script src="http://code.jquery.com/jquery.js"></script>
+    {% block extra_javascript %}{% endblock %}
+
+</body>
+</html>
