@@ -8,5 +8,6 @@ int main()
 {
 	cout<<"Hello World!";
 	cout<<"Welcome!";
+    cout<<"Mooncake";
 	return 0;
 }
